@@ -16,7 +16,7 @@ const Content = ({ parts }) => {
   return (
     <>
       {parts.map((part, index) => (
-        <Part key={index} i={index} name={part.name} ex={part.exercises} />
+        <Part key={part.name} i={index} name={part.name} ex={part.exercises} />
       ))}
     </>
   );
@@ -55,12 +55,17 @@ const Letters = () => {
     setText(text.concat(event.key));
   }
 
+  const clearTXT = () => {
+    setText([]);
+    document.getElementById("inputBox").value = "";
+  }
+
   return (
     <>
       <p>Press any key to see the key pressed</p>
-      <input type="text" onKeyDown={handleText} />
-      {/u00A0/.repeat(2)}
-      <button onClick={() => setText([])}>Clear</button>
+      <input type="text" id="inputBox" onKeyDown={handleText} />
+      {'\u00A0'.repeat(2)}
+      <button onClick={clearTXT}>Clear</button>
       <p>Length of the text: {text.length}</p>
       <p>Text: {text.length > 0 ? text.join("") : "No text entered"}</p>
     </>

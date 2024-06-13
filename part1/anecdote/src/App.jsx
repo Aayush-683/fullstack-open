@@ -28,6 +28,8 @@ const App = () => {
     });
   };
 
+  
+
   if (votes[selected] > votes[mostVoted]) {
     setMostVoted(selected);
   }
