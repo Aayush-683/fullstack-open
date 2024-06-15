@@ -31,11 +31,11 @@ app.get('/api/persons/:id', (req, res) => {
 
 app.delete('/api/persons/:id', (req, res) => {
     const id = Number(req.params.id);
-    contacts = contacts.filter(contact => contact.id !== id);
     let contact = contacts.find(c => c.id === id);
     if (contact.name == "Aayush") {
         return res.status(403).json({ error: 'Cannot delete Aayush' });
     }
+    contacts = contacts.filter(contact => contact.id !== id);
     res.status(204).end();
     fs.writeFileSync('./db.json', JSON.stringify({ contacts }, null, 2));
 })
