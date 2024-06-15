@@ -32,7 +32,8 @@ app.get('/api/persons/:id', (req, res) => {
 app.delete('/api/persons/:id', (req, res) => {
     const id = Number(req.params.id);
     contacts = contacts.filter(contact => contact.id !== id);
-    if (contacts.name == "Aayush") {
+    let contact = contacts.find(c => c.id === id);
+    if (contact.name == "Aayush") {
         res.status(403).json({ error: 'Cannot delete Aayush' });
     }
     res.status(204).end();
@@ -62,7 +63,7 @@ app.put('/api/persons/:id', (req, res) => {
     const index = contacts.findIndex(c => c.id === id);
     if (index === -1) {
         return res.status(404).end();
-    } else if (contacts.name == "Aayush") {
+    } else if (contact.name == "Aayush") {
         res.status(403).json({ error: 'Cannot delete Aayush' });
     }
     contacts[index] = { ...contacts[index], ...contact };
