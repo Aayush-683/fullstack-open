@@ -13,6 +13,7 @@ morgan.token('dataSent', (req, res) => {
 app.use(morgan(':method :url HTTP/:http-version :status :res[content-length] - :response-time ms :dataSent'));
 app.use(cors());
 app.use(express.json());
+app.use(express.static('dist'))
 
 app.get('/api/persons', (req, res) => {
     res.json(contacts);
