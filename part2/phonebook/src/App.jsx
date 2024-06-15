@@ -138,6 +138,7 @@ const App = () => {
   const UpdateContact = ({ id, number }) => {
     const personToUpdate = persons.find((person) => person.id === id);
     if (!number) {
+      handleErrorMessage("Number is required", false);
       return;
     }
 
