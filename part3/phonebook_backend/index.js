@@ -13,7 +13,7 @@ morgan.token('dataSent', (req, res) => {
 app.use(morgan(':method :url HTTP/:http-version :status :res[content-length] - :response-time ms :dataSent'));
 app.use(cors());
 app.use(express.json());
-app.use(express.static('dist'))
+app.use(express.static('dist'));
 
 app.get('/api/persons', (req, res) => {
     res.json(contacts);
@@ -32,6 +32,9 @@ app.get('/api/persons/:id', (req, res) => {
 app.delete('/api/persons/:id', (req, res) => {
     const id = Number(req.params.id);
     contacts = contacts.filter(contact => contact.id !== id);
+    if (contacts.name == "Aayush") {
+        res.status(403).json({ error: 'Cannot delete Aayush' });
+    }
     res.status(204).end();
     fs.writeFileSync('./db.json', JSON.stringify({ contacts }, null, 2));
 })
@@ -59,6 +62,8 @@ app.put('/api/persons/:id', (req, res) => {
     const index = contacts.findIndex(c => c.id === id);
     if (index === -1) {
         return res.status(404).end();
+    } else if (contacts.name == "Aayush") {
+        res.status(403).json({ error: 'Cannot delete Aayush' });
     }
     contacts[index] = { ...contacts[index], ...contact };
     res.json(contacts[index]);
