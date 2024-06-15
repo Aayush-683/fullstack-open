@@ -34,7 +34,7 @@ app.delete('/api/persons/:id', (req, res) => {
     contacts = contacts.filter(contact => contact.id !== id);
     let contact = contacts.find(c => c.id === id);
     if (contact.name == "Aayush") {
-        res.status(403).json({ error: 'Cannot delete Aayush' });
+        return res.status(403).json({ error: 'Cannot delete Aayush' });
     }
     res.status(204).end();
     fs.writeFileSync('./db.json', JSON.stringify({ contacts }, null, 2));
@@ -64,7 +64,7 @@ app.put('/api/persons/:id', (req, res) => {
     if (index === -1) {
         return res.status(404).end();
     } else if (contact.name == "Aayush") {
-        res.status(403).json({ error: 'Cannot delete Aayush' });
+        return res.status(403).json({ error: 'Cannot update Aayush' });
     }
     contacts[index] = { ...contacts[index], ...contact };
     res.json(contacts[index]);
