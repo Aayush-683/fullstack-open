@@ -1,78 +1,109 @@
+require('dotenv').config();
 const express = require('express');
 const app = express();
-const db = require('./db.json');
-let contacts = db.contacts;
 const fs = require('fs');
 const morgan = require('morgan');
 const cors = require('cors');
+const mongoose = require('mongoose');
+const { nextTick } = require('process');
+let mongo_uri = process.env.MONGO_URI
 
+// MongoDB
+mongoose.set('strictQuery', false)
+mongoose.connect(mongo_uri)
+    .then(() => console.log('Connected to MongoDB'))
+    .catch((error) => console.error('Error connecting to MongoDB:', error.message));
+const contactSchema = new mongoose.Schema({
+    name: {
+        type: String,
+        required: [true, 'Name is required'],
+        unique: true,
+        minLength: [3, 'Name must be at least 3 characters long']
+    },
+    number: {
+        type: String,
+        required: [true, 'Phone number is required'],
+        min: [8, 'Phone number must be at least 8 digits'],
+        max: [12, 'Phone number cannot be more than 11 digits'],
+        validate: {
+            validator: function(v) {
+                return /\d{3}-\d+/.test(v)
+            },
+            message: props => `${props.value} is not a valid phone number!`
+        }
+    }
+})
+const Contact = mongoose.model('Contact', contactSchema)
+
+// Morgan
 morgan.token('dataSent', (req, res) => {
     return JSON.stringify(req.body);
 });
 
+// Middleware
 app.use(morgan(':method :url HTTP/:http-version :status :res[content-length] - :response-time ms :dataSent'));
-app.use(cors());
+const corsOptions = {
+    origin: 'http://localhost:5173',
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+};
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.static('dist'));
 
-app.get('/api/persons', (req, res) => {
-    res.json(contacts);
+// Routes
+app.get('/api/persons', (req, res, next) => {
+    Contact.find({}).then(result => {
+        res.json(result.map(contact => contact.toJSON()));
+    }).catch(error => next(error))
 });
 
-app.get('/api/persons/:id', (req, res) => {
-    const id = Number(req.params.id);
-    const contact = contacts.find(contact => contact.id === id);
-    if (contact) {
-        res.json(contact);
-    } else {
-        res.status(404).end();
-    }
+app.get('/api/persons/:id', (req, res, next) => {
+    const id = req.params.id;
+    Contact.findById(id).then(result => {
+        if (result) {
+            let contact = result.toJSON();
+            contact.id = contact._id;
+            delete contact._id;
+            delete contact.__v;
+            res.json(contact);
+        } else res.status(404).json({ error: 'Contact not found' });
+    }).catch(error => next(error))
 });
 
-app.delete('/api/persons/:id', (req, res) => {
-    const id = Number(req.params.id);
-    let contact = contacts.find(c => c.id === id);
-    if (contact.name == "Aayush") {
-        return res.status(403).json({ error: 'Cannot delete Aayush' });
-    }
-    contacts = contacts.filter(contact => contact.id !== id);
-    res.status(204).end();
-    fs.writeFileSync('./db.json', JSON.stringify({ contacts }, null, 2));
+app.delete('/api/persons/:id', (req, res, next) => {
+    const id = req.params.id;
+    if (id == "666eb877589a0e279dc5b119") return res.json({ error: 'Cannot delete Aayush' });
+    Contact.findByIdAndDelete(id).then(result => {
+        res.status(204).end();
+    }).catch(error => next(error))
 })
 
-app.post('/api/persons', (req, res) => {
+app.post('/api/persons', (req, res, next) => {
     const contact = req.body;
-    if (!contact.name || !contact.number) {
-        return res.status(400).json({ error: 'name or number is missing' });
-    }
-    if (contacts.find(c => c.name === contact.name)) {
-        return res.status(400).json({ error: 'name must be unique' });
-    }
-    // Check if id is given
-    if (!contact.id) {
-        contact.id = (Math.max(...contacts.map(c => c.id)) + 1);
-    }
-    contacts.push(contact);
-    res.json(contact);
-    fs.writeFileSync('./db.json', JSON.stringify({ contacts }, null, 2));
+    if (!contact.name || !contact.number) return res.json({ error: 'name or number is missing' });
+    let newContact = new Contact({
+        name: contact.name,
+        number: contact.number
+    })
+    newContact.save().then(result => {
+        res.json(result.toJSON());
+    }).catch(error => next(error));
 });
 
-app.put('/api/persons/:id', (req, res) => {
-    const id = Number(req.params.id);
+app.put('/api/persons/:id', (req, res, next) => {
+    const id = req.params.id;
     const contact = req.body;
-    const index = contacts.findIndex(c => c.id === id);
-    if (index === -1) {
-        return res.status(404).end();
-    } else if (contact.name == "Aayush") {
-        return res.status(403).json({ error: 'Cannot update Aayush' });
-    }
-    contacts[index] = { ...contacts[index], ...contact };
-    res.json(contacts[index]);
-    fs.writeFileSync('./db.json', JSON.stringify({ contacts }, null, 2));
+    if (id == "666eb877589a0e279dc5b119") return res.json({ error: 'Cannot update Aayush' });
+    Contact.findByIdAndUpdate(id, { number: contact.number }, { new: true, runValidators: true}).then(result => {
+        res.json(result.toJSON());
+    }).catch(error => next(error));
 });
 
-app.get('/info', (req, res) => {
-    res.send(`<p>Phonebook has info for ${contacts.length} people</p><p>${new Date()}</p>`);
+app.get('/info', (req, res, next) => {
+    Contact.find({}).then(result => {
+        res.send(`<p>Phonebook has info for ${result.length} people</p><p>${new Date()}</p>`);
+    }).catch(error => next(error))
 });
 
 const PORT = process.env.PORT || 3001;
@@ -80,8 +111,19 @@ app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
 
+const errorHandler = (error, request, response, next) => {
+    console.error(error.message)
+    if (error.name === 'CastError') {
+        return response.json({ error: 'Malformatted ID' })
+    } else if (error.name === 'ValidationError') {
+        return response.json({ error: error.message })
+    }
+    next(error)
+}
+
 const unknownEndpoint = (request, response) => {
     response.status(404).send({ error: 'Unknown Endpoint' })
 }
 
 app.use(unknownEndpoint)
+app.use(errorHandler)

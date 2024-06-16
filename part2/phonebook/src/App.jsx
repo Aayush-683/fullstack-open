@@ -39,7 +39,7 @@ const Person = ({ person, DelContact }) => {
       <p>
         {person.name} {person.number}
       </p>
-      <button onClick={() => DelContact(person.id)}>Delete</button>
+      <button onClick={() => DelContact(person._id)}>Delete</button>
     </>
   );
 };
@@ -75,20 +75,19 @@ const App = () => {
       );
       if (confirmReplace) {
         UpdateContact({
-          id: persons.find((person) => person.name === name).id,
+          id: persons.find((person) => person.name === name)._id,
           number,
         });
       }
       return;
     }
 
-    const id =
-      persons.length > 0
-        ? Math.max(...persons.map((person) => person.id)) + 1
-        : 1;
-
-    contacts.create({ name, number, id }).then((res) => {
-      const newPerson = { name, number, id };
+    contacts.create({ name, number }).then((res) => {
+      if (res.error) {
+        handleErrorMessage(res.error, false);
+        return;
+      }
+      const newPerson = { name, number };
       setPersons(persons.concat(newPerson));
       setDisplay(persons.concat(newPerson));
       setNewName("");
@@ -122,12 +121,16 @@ const App = () => {
   };
 
   const DelContact = (id) => {
-    const personToDelete = persons.find((person) => person.id === id);
+    const personToDelete = persons.find((person) => person._id === id);
     const confirmDelete = window.confirm(`Delete ${personToDelete.name}?`);
 
     if (confirmDelete) {
       contacts.del(id).then((res) => {
-        const updatedPersons = persons.filter((person) => person.id !== id);
+        if (res.error) {
+          handleErrorMessage(res.error, false);
+          return;
+        }
+        const updatedPersons = persons.filter((person) => person._id !== id);
         setPersons(updatedPersons);
         setDisplay(updatedPersons);
         handleErrorMessage(`Deleted ${personToDelete.name}`, false);
@@ -136,15 +139,19 @@ const App = () => {
   };
 
   const UpdateContact = ({ id, number }) => {
-    const personToUpdate = persons.find((person) => person.id === id);
+    const personToUpdate = persons.find((person) => person._id === id);
     if (!number) {
       handleErrorMessage("Number is required", false);
       return;
     }
 
     contacts.update(id, { name: personToUpdate.name, number }).then((res) => {
+      if (res.error) {
+        handleErrorMessage(res.error, false);
+        return;
+      }
       const updatedPersons = persons.map((person) =>
-        person.id === id ? { ...person, number } : person
+        person._id === id ? { ...person, number } : person
       );
       setPersons(updatedPersons);
       setDisplay(updatedPersons);
@@ -167,6 +174,10 @@ const App = () => {
 
   useEffect(() => {
     contacts.getAll().then((res) => {
+      if (res.error) {
+        handleErrorMessage(res.error, false);
+        return;
+      }
       setPersons(res);
       setDisplay(res);
     });
@@ -191,7 +202,7 @@ const App = () => {
       <h2>Numbers</h2>
       {display.length > 0
         ? display.map((person) => (
-            <Person key={person.id} person={person} DelContact={DelContact} />
+            <Person key={person._id} person={person} DelContact={DelContact} />
           ))
         : "Loading..."}
     </div>
