@@ -23,13 +23,11 @@ const contactSchema = new mongoose.Schema({
     number: {
         type: String,
         required: [true, 'Phone number is required'],
-        min: [8, 'Phone number must be at least 8 digits'],
-        max: [12, 'Phone number cannot be more than 11 digits'],
         validate: {
             validator: function(v) {
-                return /\d{3}-\d+/.test(v)
+                return /\+\d{2} \d{3}-\d{7}+/.test(v)
             },
-            message: props => `${props.value} is not a valid phone number!`
+            message: props => `${props.value} is not in valid format (+XX XXX-XXXXXXX)`
         }
     }
 })

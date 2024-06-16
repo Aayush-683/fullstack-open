@@ -204,7 +204,7 @@ const App = () => {
         ? display.map((person) => (
             <Person key={person._id} person={person} DelContact={DelContact} />
           ))
-        : "Loading..."}
+        : "No Numbers Added."}
     </div>
   );
 };
