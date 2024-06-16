@@ -87,7 +87,7 @@ const App = () => {
         handleErrorMessage(res.error, false);
         return;
       }
-      const newPerson = { name, number };
+      const newPerson = res;
       setPersons(persons.concat(newPerson));
       setDisplay(persons.concat(newPerson));
       setNewName("");
