@@ -1,0 +1,22 @@
+{
+  "name": "part4",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "node --test "
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-async-errors": "^3.1.1",
+    "jsonwebtoken": "^9.0.2",
+    "lodash": "^4.17.21",
+    "mongoose": "^8.4.1",
+    "supertest": "^7.0.0"
+  }
+}

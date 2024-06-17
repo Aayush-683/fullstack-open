@@ -1,2 +1,5 @@
 node_modules/
 part3/phonebook_backend/.env
+*/node_modules/
+*/.env
+.env
